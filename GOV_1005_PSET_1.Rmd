@@ -1,0 +1,79 @@
+---
+title: "Problem Set 1"
+author: "Miranda Lupion"
+date: "9/19/2018"
+output: 
+  html_document:
+    theme: journal
+---
+```{r echo = TRUE, warning = FALSE, error = FALSE, message = FALSE}
+library(tidyverse)
+library(dplyr)
+library(gov.1005.data)
+data("votes_2016")
+```
+
+###Some notes about my code
+I left echo on to ensure that the code is present in the R Markdown document. I turned warnings, errors, and messages off. In my scatter plots, I  used `position_jitter(0.1)` and `alpha = 0.6` to make the points more visable. 
+
+#Question 1
+```{r echo = TRUE, warning = FALSE, error = FALSE, message = FALSE}
+q.1 <- votes_2016 %>%
+  mutate(dem_vote_share = `Hillary Clinton`/totalvote, rep_vote_share = `Donald J. Trump`/totalvote, dem_vote_share_marg = dem_vote_share - rep_vote_share, third_vote_share = (totalvote-`Hillary Clinton` -`Donald J. Trump`)/totalvote)
+
+ggplot(q.1, aes(x = dem_vote_share_marg, y = third_vote_share, size = totalvote)) + 
+  geom_point(position = position_jitter(0.1), alpha = 0.6) +
+  ggtitle("Third-party vote share in the 2016 presidential election", subtitle = "By county")+
+  scale_x_continuous("Democratic vote share margin") +
+  scale_y_continuous("Third-party vote share") + labs(size = "Total number of votes")
+```
+
+###Discussion
+This scatterplot plots the share of the total votes that third-party candidates recieved in each county (`third_vote_share`) on the y-axis and the margain of total votes that Hillary Clinton recieved in each county (`dem_vote_share_marg`) on the x-axis. `third_vote_share` is just the total number of votes for third-party candidates divided by the total number of votes (``totalvote- `Hillary Clinton` -`Donald J. Trump`/totalvote``).  `dem_vote_share_marg` is the difference between the share of votes that Hillary Clinton recieved and the share of votes that Donald J. Trump recieved (`dem_vote_share_marg = dem_vote_share - rep_vote_share`). A positive Democratic vote share margin indicates that the Democratic candidate won the county, while a negative share margin indicates that the Republican candidate won. The size of the points corresponds to the number of total votes (`total vote`) in a given county.
+
+The graph shows that counties with a negative Democratic vote share margin tended to have higher third-party vote shares. This indicates that third-party candidates often got a greater share of the votes in counties that Trump ultimately won. They may suggest that Republicans voted for third-party candidates at slightly higher rates than Democrats did.
+
+The graph also shows that more populous counties (represented by larger points) tended to go to Hillary Clinton. This supports the idea that voters in urban areas tend to vote blue, while in rural areas, voters tend to vote red.
+
+Finally, there are more points on the left of the graph (where the Democratic vote share margin is negative) than on the right of the graph. This is in line with Trump winning the electoral vote - i.e. winning a greater number of counties. However, the points to the right of the 0.0 mark on the x-axis are collectively larger than those on to the left of that mark. This coroborates Hillary Clinton's victory in the popular vote. 
+
+
+#Question 1 - Extension A
+```{r echo = TRUE, warning = FALSE, error = FALSE, message = FALSE}
+q.1.b <- q.1 %>%
+  select(name, totalvote, state.abb, rep_vote_share, dem_vote_share, dem_vote_share_marg, third_vote_share) %>%
+  mutate(avg_third_vote_share = mean(third_vote_share)) %>%
+  filter(third_vote_share > avg_third_vote_share)
+  
+ggplot(q.1.b, aes(x = dem_vote_share_marg, y = third_vote_share, size = totalvote)) + 
+  geom_point(position = position_jitter(0.1), alpha = 0.6) +
+  ggtitle("Third-party vote share in the 2016 presidential election", subtitle = "In counties where third-party candidates recieved an above average share of the vote")+
+  scale_x_continuous("Democratic vote share margin") +
+  scale_y_continuous("Third-party vote share") + 
+  labs(size = "Total number of votes")
+```
+
+###Discussion
+I wanted to see if the trend of counties with a negative Democratic vote share margin and higher third-party vote shares held up in counties where third-party candidates collectively did exceptionally well. Would this be a result of strong support from Republicans, or should I attribute their success to gaining the votes of both Democrats and Republicans?
+
+The mean third-party vote share was `r mean(q.1$third_vote_share)` - about 5 percent. This plot only includes counties with an above-average third-party vote share. The strong clustering of points to the left of the 0.0 mark and to the right of the -0.5 mark on the x-axis suggests that third-party candidates did best in counties where Trump did moderately well. Again, this may be because voters, who typically vote Republican, chose to vote for a third-party candidate instead of Trump. That's why these points are not clustered as heavily past the -0.5 mark. Voters who would have voted for Trump, making the Democratic vote share margin more negative, instead voted for a third-party candidate.
+
+But what about the outliers? I try to account for at least some of those counties in the next plot. 
+
+
+##Question 1 - Extension B
+```{r echo = TRUE, warning = FALSE, error = FALSE, message = FALSE}
+#Only in Utah - so 29 counties
+q.1.c <- q.1 %>%
+  filter(state.abb == "UT") 
+
+ggplot(q.1.c, aes(x = dem_vote_share_marg, y = third_vote_share, size = totalvote)) + 
+  geom_point(position = position_jitter(0.1), alpha = 0.6) +
+  ggtitle("Utah's third-party vote share in the 2016 presidential election", subtitle = "By county") +
+  scale_x_continuous("Democratic vote share margin") +
+  scale_y_continuous("Third-party vote share") + 
+  labs(size = "Total number of votes")
+```
+
+###Discussion
+This plot shows only counties in Utah. Utah, with the exception of Summit County and Salt Lake County, usually votes red. However, I predicted that the third-party vote share would be exceptionally high for counties in this state, because Evan McMullin is from Utah. Many of the outliers in the second plot appear here. In some of these counties, the third-party candidates collectively got more votes than Clinton, making the Democrate vote share margin low and the third-party vote share high. 
